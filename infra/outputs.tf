@@ -25,3 +25,7 @@ output "db_secret_arn" {
 output "ecr_repository_urls" {
   value = module.registry.repository_urls
 }
+
+output "app_url" {
+  value = "http://${module.ecs.alb_dns_name}"
+}

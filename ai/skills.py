@@ -18,8 +18,16 @@ ALIASES = {
     "node": "node.js",
     "nextjs": "next.js",
     "embedded linux": "linux",
+    "react.js": "react",
+    "reactjs": "react",
+    "vue.js": "vue",
+    "vuejs": "vue",
+    "nuxt.js": "nuxt",
+    "css3": "css",
+    "html5": "html",
+    "open telemetry": "opentelemetry",
+    "hashicorp vault": "vault",
 }
-
 
 def normalize_skills(skills: list[str]) -> list[str]:
     """Lowercase, trim, rename to one standard name, and remove repeats."""

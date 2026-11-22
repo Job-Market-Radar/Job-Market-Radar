@@ -13,7 +13,10 @@ class Extraction(BaseModel):
     salary_max: int | None
     currency: str | None                                                    # ← blank 2
     salary_period: Literal["hour", "month", "year", "unknown"] | None       # ← blank 3
+class CvSkills(BaseModel):
+    """The form the AI fills in for a CV: just the skills."""
 
+    skills: list[str]
 
 if __name__ == "__main__":
     good = Extraction(

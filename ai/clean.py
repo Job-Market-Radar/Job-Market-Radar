@@ -27,7 +27,7 @@ def clean_remotive(job: dict) -> dict:
         "title": job["title"].strip(),
         "company": job["company_name"].strip(),
         "location": job["candidate_required_location"] or None,
-        "remote": True,
+        "remote": "remote",  # ←
         "posted_at": job["publication_date"],
         "description": description,
         "skills": [],
@@ -36,7 +36,6 @@ def clean_remotive(job: dict) -> dict:
         "salary_max": None,
         "currency": None,
     }
-
 
 
 def parse_hn_header(text: str) -> dict:
@@ -68,7 +67,7 @@ def clean_hn(post: dict) -> dict:
         "title": header["title"],
         "company": header["company"],
         "location": header["location"],
-        "remote": header["remote"],
+        "remote": "remote" if header["remote"] else "unknown",  # ←
         "posted_at": post["created_at"],
         "description": strip_html(post["text"]),
         "skills": [],

@@ -15,6 +15,8 @@ load_dotenv()
 DATABASE_URL = os.environ["DATABASE_URL"]
 
 CREATE_TABLES = """
+CREATE EXTENSION IF NOT EXISTS vector;
+
 CREATE TABLE IF NOT EXISTS raw_postings (
     id          TEXT PRIMARY KEY,
     source      TEXT NOT NULL,
@@ -23,20 +25,48 @@ CREATE TABLE IF NOT EXISTS raw_postings (
 );
 
 CREATE TABLE IF NOT EXISTS postings (
-    id          TEXT PRIMARY KEY,
-    source      TEXT NOT NULL,
-    url         TEXT NOT NULL,
-    title       TEXT,
-    company     TEXT,
-    location    TEXT,
-    remote      BOOLEAN,
-    posted_at   TIMESTAMPTZ,
-    description TEXT,
-    skills      TEXT[] NOT NULL DEFAULT '{}',
-    seniority   TEXT,
-    salary_min  NUMERIC,
-    salary_max  NUMERIC,
-    currency    TEXT
+    id                  TEXT PRIMARY KEY,
+    source              TEXT NOT NULL,
+    url                 TEXT NOT NULL,
+    title               TEXT,
+    company             TEXT,
+    location            TEXT,
+    remote              TEXT NOT NULL DEFAULT 'unknown',
+    posted_at           TIMESTAMPTZ,
+    description         TEXT,
+    skills              TEXT[] NOT NULL DEFAULT '{}',
+    seniority           TEXT,
+    salary_min          INTEGER,
+    salary_max          INTEGER,
+    currency            TEXT,
+    salary_period       TEXT,
+    extracted_at        TIMESTAMPTZ,
+    extraction_version  TEXT
+);
+
+CREATE INDEX IF NOT EXISTS postings_skills_idx ON postings USING gin (skills);
+
+CREATE TABLE IF NOT EXISTS posting_embeddings (
+    posting_id  TEXT PRIMARY KEY REFERENCES postings(id) ON DELETE CASCADE,
+    model       TEXT NOT NULL,
+    embedding   vector(768) NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS posting_embeddings_hnsw_idx
+    ON posting_embeddings USING hnsw (embedding vector_cosine_ops);
+
+CREATE TABLE IF NOT EXISTS cv_matches (
+    id               BIGSERIAL PRIMARY KEY,
+    match_id         UUID NOT NULL,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    posting_id       TEXT NOT NULL REFERENCES postings(id) ON DELETE CASCADE,
+    rank             SMALLINT NOT NULL,
+    score            REAL NOT NULL,
+    vector_score     REAL NOT NULL,
+    skill_overlap    REAL NOT NULL,
+    matching_skills  TEXT[] NOT NULL,
+    missing_skills   TEXT[] NOT NULL
 );
 """
 

@@ -1,0 +1,11 @@
+TASK:
+You will read one CV (resume). List the technical skills this person has, using ONLY what the CV says.
+
+RULES:
+- Technical skills only: programming languages, tools, frameworks, cloud platforms, and named hardware or protocols. Write them in lowercase.
+- Do not include soft skills like "communication" or "teamwork", or general areas like "full-stack" or "ai".
+- Use the common name for each skill (for example "kubernetes", not "k8s").
+- Never guess. If the CV doesn't mention a skill, don't list it.
+
+CV:
+{cv}

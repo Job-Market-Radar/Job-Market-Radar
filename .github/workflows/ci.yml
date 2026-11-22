@@ -33,7 +33,7 @@ jobs:
           cache: pip
           cache-dependency-path: ai/requirements.txt
       - name: Install dependencies
-        run: pip install -r ai/requirements.txt pytest
+        run: pip install -r ai/requirements.txt pytest httpx
       - name: Test
         working-directory: ai
         run: python -m pytest

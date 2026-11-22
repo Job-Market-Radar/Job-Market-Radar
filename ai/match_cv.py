@@ -45,7 +45,8 @@ def read_cv_text(path: str) -> str:
 
 def cv_skills(client, cv_text: str) -> list[str]:
     """Ask Gemini which technical skills the CV shows."""
-    with open(os.path.join("ai", "prompts", "cv_skills_v1.txt"), encoding="utf-8") as f:
+    prompt_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts", "cv_skills_v1.txt")
+    with open(prompt_path, encoding="utf-8") as f:
         prompt = f.read().replace("{cv}", cv_text[:MAX_CHARS])
     response = client.models.generate_content(
         model=LLM_MODEL,

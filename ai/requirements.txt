@@ -4,3 +4,6 @@ psycopg[binary]
 python-dotenv
 google-genai
 pypdf
+fastapi
+uvicorn[standard]
+python-multipart

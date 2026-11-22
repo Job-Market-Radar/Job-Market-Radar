@@ -13,3 +13,4 @@ __pycache__/
 *.tfstate
 *.tfstate.*
 ai/check_key.py
+ai/data/

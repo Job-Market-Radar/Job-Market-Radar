@@ -14,21 +14,13 @@ LIMIT %(limit)s
 """
 
 
-def similar_jobs(conn, posting_id: str, limit: int = 10) -> list[tuple]:
-    """The postings whose embeddings are closest to this posting's embedding."""
-    return conn.execute(SIMILAR, {"id": posting_id, "limit": limit}).fetchall()
+def similar_jobs(conn, posting_id: str, limit: int = 10) -> list[dict]:
+    """The postings whose embeddings are closest to this posting's, best first."""
+    rows = conn.execute(SIMILAR, {"id": posting_id, "limit": limit}).fetchall()
+    return [{"id": r[0], "title": r[1], "company": r[2], "score": r[3]} for r in rows]
 
 
 if __name__ == "__main__":
-    posting_id = sys.argv[1]
     with psycopg.connect(DATABASE_URL) as conn:
-        target = conn.execute(
-            "SELECT title, company FROM postings WHERE id = %s", (posting_id,)
-        ).fetchone()
-        if target is None:
-            print(f"No posting with id {posting_id}")
-            sys.exit(1)
-
-        print(f"Jobs most similar to: {target[0]} @ {target[1]}\n")
-        for pid, title, company, score in similar_jobs(conn, posting_id):
-            print(f"{score:.2f}  {title} @ {company}  ({pid})")
+        for job in similar_jobs(conn, sys.argv[1]):
+            print(f"{job['score']:.2f}  {job['title']} @ {job['company']}")

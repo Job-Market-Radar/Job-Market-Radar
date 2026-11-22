@@ -17,3 +17,7 @@ output "db_security_group_id" {
 output "gemini_secret_arn" {
   value = aws_secretsmanager_secret.gemini_api_key.arn
 }
+
+output "raw_bucket_arn" {
+  value = aws_s3_bucket.raw.arn
+}

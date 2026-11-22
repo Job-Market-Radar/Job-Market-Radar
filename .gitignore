@@ -4,7 +4,7 @@ secrets.py
 *.key
 
 .venv/
-data/
+/data/
 __pycache__/
 .ipynb_checkpoints/
 *.pyc

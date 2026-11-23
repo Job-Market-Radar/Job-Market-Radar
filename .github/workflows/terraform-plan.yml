@@ -42,7 +42,7 @@ jobs:
         run: terraform plan -no-color -input=false -lock-timeout=60s 2>&1 | tee plan.txt
 
       - name: Comment on the PR
-        if: always()
+        if: always() && steps.plan.outcome != 'skipped'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

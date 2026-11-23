@@ -28,6 +28,6 @@ module "ecs" {
 
 module "cicd" {
   source       = "./modules/cicd"
-  github_repo  = "Job-Market-Radar/Job-Market-Radar"
+  github_repo  = "Job-Market-Radar@357161711/Job-Market-Radar@1459352965"
   state_bucket = "jmr-tfstate-885069197789"
 }

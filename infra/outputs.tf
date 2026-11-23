@@ -29,3 +29,7 @@ output "ecr_repository_urls" {
 output "app_url" {
   value = "http://${module.ecs.alb_dns_name}"
 }
+
+output "fetcher_security_group_id" {
+  value = module.ecs.fetcher_security_group_id
+}

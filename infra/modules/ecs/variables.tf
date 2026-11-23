@@ -29,3 +29,7 @@ variable "public_subnet_ids" {
 variable "db_security_group_id" {
   type = string
 }
+
+variable "fetcher_image" {
+  type = string
+}

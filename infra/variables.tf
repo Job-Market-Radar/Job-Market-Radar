@@ -5,5 +5,5 @@ variable "api_image_tag" {
 
 variable "ai_image_tag" {
   type    = string
-  default = "31fd2a7"
+  default = "3232aaa"
 }

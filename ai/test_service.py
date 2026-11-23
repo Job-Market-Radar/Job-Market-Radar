@@ -49,6 +49,10 @@ class FakeCursor:
     def executemany(self, sql, rows):
         self.conn.saved_rows.extend(rows)
 
+    def execute(self, sql, params=None):
+        return self.conn.results.pop(0)
+
+
 
 class FakeConn:
     """A pretend database: each execute() returns the next prepared answer, in order."""
@@ -174,3 +178,14 @@ def test_match_cv_gemini_busy_is_503(client, monkeypatch):
     monkeypatch.setattr(service, "match_cv", busy)
     response = client.post("/match-cv", files={"file": ("cv.pdf", b"%PDF-fake", "application/pdf")})
     assert response.status_code == 503
+
+def test_list_jobs(client):
+    use_conn(FakeConn([FakeResult(one=(1,)), FakeResult(rows=[JOB])]))
+    response = client.get("/jobs?skill=Python&limit=5")
+    assert response.status_code == 200
+    assert response.json() == {"total": 1, "limit": 5, "offset": 0, "items": [JOB]}
+
+
+def test_list_jobs_limit_too_big_is_422(client):
+    use_conn(FakeConn())
+    assert client.get("/jobs?limit=101").status_code == 422

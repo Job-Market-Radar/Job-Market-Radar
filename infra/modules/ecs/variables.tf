@@ -33,3 +33,7 @@ variable "db_security_group_id" {
 variable "fetcher_image" {
   type = string
 }
+
+variable "ai_image" {
+  type = string
+}

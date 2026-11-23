@@ -33,3 +33,11 @@ output "app_url" {
 output "fetcher_security_group_id" {
   value = module.ecs.fetcher_security_group_id
 }
+
+output "gha_plan_role_arn" {
+  value = module.cicd.plan_role_arn
+}
+
+output "gha_deploy_role_arn" {
+  value = module.cicd.deploy_role_arn
+}

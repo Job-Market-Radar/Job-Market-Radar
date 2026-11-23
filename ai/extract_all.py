@@ -38,8 +38,8 @@ WHERE id = %(id)s
 
 
 if __name__ == "__main__":
-    with open(os.path.join("ai", "prompts", f"extract_{PROMPT_VERSION}.txt"), encoding="utf-8") as f:
-        template = f.read()
+    prompt_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts", f"extract_{PROMPT_VERSION}.txt")
+    with open(prompt_path, encoding="utf-8") as f:        template = f.read()
     client = genai.Client()
 
     with psycopg.connect(DATABASE_URL, autocommit=True) as conn:

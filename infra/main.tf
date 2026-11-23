@@ -22,4 +22,5 @@ module "ecs" {
   vpc_id               = module.network.vpc_id
   public_subnet_ids    = module.network.public_subnet_ids
   db_security_group_id = module.data.db_security_group_id
+  fetcher_image        = "${module.registry.repository_urls["fetcher"]}:${var.ai_image_tag}"
 }

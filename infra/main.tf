@@ -23,4 +23,11 @@ module "ecs" {
   public_subnet_ids    = module.network.public_subnet_ids
   db_security_group_id = module.data.db_security_group_id
   fetcher_image        = "${module.registry.repository_urls["fetcher"]}:${var.ai_image_tag}"
+  ai_image             = "${module.registry.repository_urls["ai"]}:${var.ai_image_tag}"
+}
+
+module "cicd" {
+  source       = "./modules/cicd"
+  github_repo  = "Job-Market-Radar/Job-Market-Radar"
+  state_bucket = "jmr-tfstate-885069197789"
 }

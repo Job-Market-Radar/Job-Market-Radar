@@ -13,6 +13,7 @@ from psycopg.rows import dict_row
 from pypdf import PdfReader
 from pypdf.errors import PyPdfError
 from similar import similar_jobs
+from skills import normalize_skills
 
 MAX_CV_BYTES = 5 * 1024 * 1024  # 5 MB, from the contract
 
@@ -41,7 +42,15 @@ TOP_SKILLS = (
     + FILTERED.replace("FROM postings", "FROM postings, unnest(skills) AS skill")
     + "GROUP BY skill ORDER BY count DESC, skill LIMIT %(limit)s"
 )
-
+# Filters for GET /jobs. A NULL filter means "don't filter on this".
+# skills @> list means "the posting has ALL of these skills".
+JOB_FILTERS = """
+FROM postings
+WHERE (%(skills)s::text[] IS NULL OR skills @> %(skills)s::text[])
+  AND (%(seniority)s::text IS NULL OR seniority = %(seniority)s)
+  AND (%(remote)s::text IS NULL OR remote = %(remote)s)
+  AND (%(source)s::text IS NULL OR source = %(source)s)
+"""
 app = FastAPI(title="Job Market Radar AI service")
 
 
@@ -83,6 +92,33 @@ def pdf_text(data: bytes) -> str:
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.get("/jobs")
+def list_jobs(
+    conn: Conn,
+    skill: Annotated[list[str] | None, Query()] = None,
+    seniority: str | None = None,
+    remote: str | None = None,
+    source: str | None = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+):
+    params = {
+        "skills": normalize_skills(skill) if skill else None,
+        "seniority": seniority,
+        "remote": remote,
+        "source": source,
+        "limit": limit,
+        "offset": offset,
+    }
+    total = conn.execute("SELECT count(*) " + JOB_FILTERS, params).fetchone()[0]
+    with conn.cursor(row_factory=dict_row) as cur:
+        items = cur.execute(
+            f"SELECT {JOB_COLUMNS} " + JOB_FILTERS
+            + " ORDER BY posted_at DESC NULLS LAST, id LIMIT %(limit)s OFFSET %(offset)s",
+            params,
+        ).fetchall()
+    return {"total": total, "limit": limit, "offset": offset, "items": items}
 
 
 @app.get("/jobs/{job_id}/similar")

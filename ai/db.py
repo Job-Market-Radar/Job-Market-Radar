@@ -9,10 +9,18 @@ from clean import (
     remove_duplicates,
 )
 from dotenv import load_dotenv
+from psycopg.conninfo import make_conninfo
 from psycopg.types.json import Jsonb
 
 load_dotenv()
-DATABASE_URL = os.environ["DATABASE_URL"]
+# Locally: one DATABASE_URL. On AWS: four separate DB_* settings from Secrets Manager.
+DATABASE_URL = os.environ.get("DATABASE_URL") or make_conninfo(
+    host=os.environ["DB_HOST"],
+    dbname=os.environ["DB_NAME"],
+    user=os.environ["DB_USER"],
+    password=os.environ["DB_PASSWORD"],
+    port=os.environ.get("DB_PORT", "5432"),
+)
 
 CREATE_TABLES = """
 CREATE EXTENSION IF NOT EXISTS vector;

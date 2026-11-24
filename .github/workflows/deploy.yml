@@ -1,0 +1,80 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: eu-north-1
+  REGISTRY: 885069197789.dkr.ecr.eu-north-1.amazonaws.com
+  DEPLOY_ROLE: arn:aws:iam::885069197789:role/jmr-gha-deploy
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: api
+            context: ./api
+            dockerfile: api/Dockerfile
+          - name: fetcher
+            context: ./ai
+            dockerfile: ai/Dockerfile
+          - name: ai
+            context: ./ai
+            dockerfile: ai/service.Dockerfile
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push jmr-${{ matrix.name }}
+        run: |
+          TAG="${GITHUB_SHA::7}"
+          IMAGE="$REGISTRY/jmr-${{ matrix.name }}:$TAG"
+          if aws ecr describe-images --repository-name "jmr-${{ matrix.name }}" --image-ids imageTag="$TAG" > /dev/null 2>&1; then
+            echo "$IMAGE already exists, skipping build"
+            exit 0
+          fi
+          docker build -f "${{ matrix.dockerfile }}" -t "$IMAGE" "${{ matrix.context }}"
+          docker push "$IMAGE"
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Init
+        run: terraform init -input=false
+
+      - name: Apply
+        run: terraform apply -auto-approve -input=false -lock-timeout=120s -var "image_tag=${GITHUB_SHA::7}"
+
+      - name: Wait for the services to be stable
+        run: aws ecs wait services-stable --cluster jmr-cluster --services jmr-api jmr-ai

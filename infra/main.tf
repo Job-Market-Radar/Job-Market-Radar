@@ -14,7 +14,7 @@ module "registry" {
 
 module "ecs" {
   source               = "./modules/ecs"
-  api_image            = "${module.registry.repository_urls["api"]}:${var.api_image_tag}"
+  api_image            = "${module.registry.repository_urls["api"]}:${var.image_tag}"
   db_host              = module.data.db_endpoint
   db_secret_arn        = module.data.db_secret_arn
   gemini_secret_arn    = module.data.gemini_secret_arn
@@ -22,8 +22,8 @@ module "ecs" {
   vpc_id               = module.network.vpc_id
   public_subnet_ids    = module.network.public_subnet_ids
   db_security_group_id = module.data.db_security_group_id
-  fetcher_image        = "${module.registry.repository_urls["fetcher"]}:${var.ai_image_tag}"
-  ai_image             = "${module.registry.repository_urls["ai"]}:${var.ai_image_tag}"
+  fetcher_image        = "${module.registry.repository_urls["fetcher"]}:${var.image_tag}"
+  ai_image             = "${module.registry.repository_urls["ai"]}:${var.image_tag}"
 }
 
 module "cicd" {

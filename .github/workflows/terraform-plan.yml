@@ -39,7 +39,9 @@ jobs:
       - name: Plan
         id: plan
         continue-on-error: true
-        run: terraform plan -no-color -input=false -lock-timeout=60s 2>&1 | tee plan.txt
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: terraform plan -no-color -input=false -lock-timeout=60s -var "image_tag=${BASE_SHA::7}" 2>&1 | tee plan.txt
 
       - name: Comment on the PR
         if: always() && steps.plan.outcome != 'skipped'

@@ -3,6 +3,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from costs import cost_usd
 from skills import normalize_skills
 
 FIELDS = ["seniority", "remote", "salary_min", "salary_max", "currency", "salary_period"]
@@ -41,6 +42,22 @@ def skill_scores(labels: dict, predictions: dict) -> tuple[float, float]:
     return precision, recall
 
 
+def speed_and_cost(predictions: dict, model: str) -> None:
+    """Average time and tokens per posting, and what 1,000 postings would cost."""
+    rows = [row for row in predictions.values() if "seconds" in row]
+    if not rows:
+        print("\n(no time/token data in this file)")
+        return
+    count = len(rows)
+    seconds = sum(row["seconds"] for row in rows) / count
+    input_tokens = sum(row["input_tokens"] for row in rows) / count
+    output_tokens = sum(row["output_tokens"] for row in rows) / count
+    per_1000 = cost_usd(model, input_tokens * 1000, output_tokens * 1000)
+    print(f"\n{'avg time':15} {seconds:.1f} s per posting")
+    print(f"{'avg tokens':15} {input_tokens:.0f} in, {output_tokens:.0f} out")
+    print(f"{'cost':15} ${per_1000:.2f} per 1,000 postings (paid tier)")
+
+
 def show_mistakes(labels: dict, predictions: dict) -> None:
     """Print every disagreement, so you can see WHY the AI was wrong."""
     for posting_id, label in labels.items():
@@ -64,18 +81,23 @@ def show_mistakes(labels: dict, predictions: dict) -> None:
 
 
 if __name__ == "__main__":
-    version = sys.argv[1] if len(sys.argv) > 1 else "v1"
-    labels = {row["id"]: row for row in read_jsonl(os.path.join("ai", "eval", "labels.jsonl"))}
-    predictions = {
-        row["id"]: row
-        for row in read_jsonl(os.path.join("ai", "eval", f"predictions_{version}.jsonl"))
-    }
+    # Usage: python ai\eval\run_eval.py v3 --model gemini-3.8-flash   (old files: run_eval.py v3)
+    args = sys.argv[1:]
+    model = args[args.index("--model") + 1] if "--model" in args else None
+    version = args[0] if args and not args[0].startswith("--") else "v1"
+    name = f"predictions_{version}_{model}.jsonl" if model else f"predictions_{version}.jsonl"
 
-    print(f"Prompt {version}: {len(predictions)} of {len(labels)} postings answered\n")
+    labels = {row["id"]: row for row in read_jsonl(os.path.join("ai", "eval", "labels.jsonl"))}
+    predictions = {row["id"]: row for row in read_jsonl(os.path.join("ai", "eval", name))}
+
+    print(f"Prompt {version}, model {model or '(old run)'}: {len(predictions)} of {len(labels)} answered\n")
     for field in FIELDS:
         print(f"{field:15} {field_accuracy(labels, predictions, field):.0%}")
     precision, recall = skill_scores(labels, predictions)
     print(f"{'skills':15} precision {precision:.0%}, recall {recall:.0%}")
+
+    if model:
+        speed_and_cost(predictions, model)
 
     if "--mistakes" in sys.argv:
         show_mistakes(labels, predictions)

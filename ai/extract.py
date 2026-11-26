@@ -13,6 +13,7 @@ from skills import normalize_skills
 load_dotenv()
 
 MODEL = "gemini-3.5-flash-lite"
+FALLBACK_MODEL = "gemini-3.8-flash"  # only used when MODEL fails twice (see RESULTS.md)
 SAMPLE = os.path.join("ai", "eval", "sample.jsonl")
 SECONDS_BETWEEN_CALLS = 5
 
@@ -76,6 +77,18 @@ def extract_with_retry(
             continue
         time.sleep(SECONDS_BETWEEN_CALLS)
     return None
+
+
+def extract_routed(client, prompt: str, usage: dict[str, dict]) -> tuple[Extraction | None, str]:
+    """Cheap model first; the bigger model only if the cheap one fails twice.
+
+    usage has one counter per model. Returns the answer and which model gave it.
+    """
+    result = extract_with_retry(client, prompt, MODEL, usage[MODEL])
+    if result is not None:
+        return result, MODEL
+    print(f"  falling back to {FALLBACK_MODEL}")
+    return extract_with_retry(client, prompt, FALLBACK_MODEL, usage[FALLBACK_MODEL]), FALLBACK_MODEL
 
 
 if __name__ == "__main__":

@@ -27,6 +27,8 @@ ALIASES = {
     "html5": "html",
     "open telemetry": "opentelemetry",
     "hashicorp vault": "vault",
+    "gcp vertex ai": "vertex ai",
+    "google vertex ai": "vertex ai",
 }
 
 def normalize_skills(skills: list[str]) -> list[str]:

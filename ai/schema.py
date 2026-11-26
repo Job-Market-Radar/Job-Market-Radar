@@ -1,18 +1,23 @@
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 
 class Extraction(BaseModel):
-    """The form the AI must fill in for each job posting."""
-
     skills: list[str]
     seniority: Literal["intern", "junior", "mid", "senior", "lead", "unknown"]
     remote: Literal["remote", "hybrid", "onsite", "unknown"]                 # ← blank 1
     salary_min: int | None
     salary_max: int | None
     currency: str | None                                                    # ← blank 2
-    salary_period: Literal["hour", "month", "year", "unknown"] | None       # ← blank 3
+    salary_period: Literal["hour", "month", "year", "unknown"] | None  
+    
+    @model_validator(mode="after")
+    def fix_reversed_salary(self):
+        """Some postings write ranges backwards ("$180k - 160k"): put the smaller number first."""
+        if self.salary_min is not None and self.salary_max is not None and self.salary_min > self.salary_max:
+            self.salary_min, self.salary_max = self.salary_max, self.salary_min
+        return self     # ← blank 3
 class CvSkills(BaseModel):
     """The form the AI fills in for a CV: just the skills."""
 

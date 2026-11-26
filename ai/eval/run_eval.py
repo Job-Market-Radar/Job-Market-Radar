@@ -89,7 +89,12 @@ if __name__ == "__main__":
 
     labels = {row["id"]: row for row in read_jsonl(os.path.join("ai", "eval", "labels.jsonl"))}
     predictions = {row["id"]: row for row in read_jsonl(os.path.join("ai", "eval", name))}
-
+    # Compare fairly: only score postings that BOTH models answered.
+    if "--same-as" in args:
+        other = args[args.index("--same-as") + 1]
+        other_path = os.path.join("ai", "eval", f"predictions_{version}_{other}.jsonl")
+        other_ids = {row["id"] for row in read_jsonl(other_path)}
+        labels = {pid: label for pid, label in labels.items() if pid in predictions and pid in other_ids}
     print(f"Prompt {version}, model {model or '(old run)'}: {len(predictions)} of {len(labels)} answered\n")
     for field in FIELDS:
         print(f"{field:15} {field_accuracy(labels, predictions, field):.0%}")

@@ -81,16 +81,36 @@ CREATE TABLE IF NOT EXISTS cv_matches (
 INSERT_RAW = """
 INSERT INTO raw_postings (id, source, data)
 VALUES (%s, %s, %s)
-ON CONFLICT (id) DO NOTHING
+ON CONFLICT (id) DO UPDATE
+SET data = EXCLUDED.data, fetched_at = now()
+WHERE raw_postings.data IS DISTINCT FROM EXCLUDED.data
 """
 
+# Upsert: new postings are added; changed ones get their source fields updated.
+# The extracted fields (skills, seniority, salary...) are never overwritten here.
 INSERT_POSTING = """
 INSERT INTO postings (id, source, url, title, company, location, remote, posted_at,
                       description, skills, seniority, salary_min, salary_max, currency)
 VALUES (%(id)s, %(source)s, %(url)s, %(title)s, %(company)s, %(location)s, %(remote)s,
         %(posted_at)s, %(description)s, %(skills)s, %(seniority)s, %(salary_min)s,
         %(salary_max)s, %(currency)s)
-ON CONFLICT (id) DO NOTHING
+ON CONFLICT (id) DO UPDATE SET
+    url = EXCLUDED.url,
+    title = EXCLUDED.title,
+    company = EXCLUDED.company,
+    location = EXCLUDED.location,
+    posted_at = EXCLUDED.posted_at,
+    description = EXCLUDED.description,
+    -- New text means the old extraction may be wrong: let extract_all.py redo it.
+    extracted_at = CASE
+        WHEN postings.description IS DISTINCT FROM EXCLUDED.description THEN NULL
+        ELSE postings.extracted_at
+    END
+WHERE (postings.url, postings.title, postings.company, postings.location,
+       postings.posted_at, postings.description)
+      IS DISTINCT FROM
+      (EXCLUDED.url, EXCLUDED.title, EXCLUDED.company, EXCLUDED.location,
+       EXCLUDED.posted_at, EXCLUDED.description)
 """
 
 
@@ -130,5 +150,5 @@ if __name__ == "__main__":
         added = insert_postings(conn, postings)
         total = conn.execute("SELECT count(*) FROM postings").fetchone()[0]
 
-    print(f"Raw: {raw_added} new")
-    print(f"Postings: {added} new, {total} total in the database")
+    print(f"Raw: {raw_added} new or changed")
+    print(f"Postings: {added} new or changed, {total} total in the database")

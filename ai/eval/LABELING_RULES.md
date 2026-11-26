@@ -59,3 +59,11 @@ One of: `hour`, `month`, `year`, `unknown`
   - "Apache Airflow" → `airflow`, "Microsoft Azure" → `azure`, "Google Cloud"/"GCP" → `gcp`
   - "Ruby on Rails" → `rails`, "Tailwind CSS" → `tailwind`, "Hugging Face" → `huggingface`, "LLMs" → `llm`
   - "TanStack Query/Router" → `tanstack`
+
+## Added on Day 5 (postings 31–50, labeled with AI help)
+- Office tools (Word, Google Sheets, Slack, CRM software) are not technical skills.
+- A commission-only "expected earnings" range counts as salary.
+- "$XXX" or other placeholders → no salary stated.
+- A backwards range ("$180k – 160k") → smallest number in salary_min.
+- "Associate" in a title → `junior`.
+- "Vertex AI" / "GCP Vertex AI" → `vertex ai`.
